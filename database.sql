@@ -1,0 +1,5 @@
+-- File: database.sql
+-- Module: Core
+-- Assigned to: Shalom K
+-- Status: TODO
+-- Description: MySQL schema import script
