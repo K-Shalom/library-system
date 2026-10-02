@@ -51,6 +51,9 @@ Database name: `library_db`. Host: `localhost`. These are sample credentials for
 - Implemented `config/Database.php`: PDO Singleton connection with exception mode, safe error logging, and system constants.
 - Implemented `config/exceptions.php`: custom exception classes for validation, business rules, missing records, and database failures.
 
+### Jose Narame
+- Finished `config/functions.php` (helpers, flash, CSRF, validation), `modules/auth/Librarian.php`, `modules/auth/login.php`, `modules/auth/logout.php`, and `error.php`.
+
 (Other members: add your own entry here when you finish your files.)
 
 ## Team workflow
