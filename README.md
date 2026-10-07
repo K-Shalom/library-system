@@ -55,7 +55,7 @@ Database name: `library_db`. Host: `localhost`. These are sample credentials for
 - Finished `config/functions.php` (helpers, flash, CSRF, validation), `modules/auth/Librarian.php`, `modules/auth/login.php`, `modules/auth/logout.php`, and `error.php`.
 
 ### Adeline N
-- Finished `modules/catalog/Book.php` (Book model with find, all, search, create, update, delete, hasActiveLoans, decrementAvailable, incrementAvailable), `modules/catalog/books.php` (catalog listing + search + delete), and `modules/catalog/book_form.php` (add/edit book form).
+- Finished `modules/catalog/Book.php`, `modules/catalog/books.php`, and `modules/catalog/book_form.php` (book model, searchable catalog, and add/edit form).
 
 ### Sabin Levis
 - Finished `includes/header.php` (Bootstrap 5.3 CDN head + responsive navbar with all module links, Reports dropdown, librarian name, logout; opens container + calls show_flash() with active-page highlighting), `includes/footer.php` (closes container, Group 3 footer text, Bootstrap JS bundle), `assets/style.css` (stat cards, tables, status badges, full @media print styles with .print-hide and .print-header helpers).
