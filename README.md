@@ -63,6 +63,9 @@ Database name: `library_db`. Host: `localhost`. These are sample credentials for
 - Finished `modules/reports/overdue.php`: sorted-by-most-overdue table with member name/phone, book title, issue/due dates, days-overdue badge, per-row estimated fine (days × DAILY_FINE RWF), total estimated footer; empty friendly message when no overdue; Print button + print-friendly styles.
 - Finished `modules/reports/reports.php`: validated date-range filter (both dates required, real YYYY-MM-DD, from ≤ to), 4 sections — circulation overview (issued / returned / still out), top-5 most borrowed books, availability snapshot (total / available / borrowed / status badge), fines (collected in period vs outstanding current vs total); all with empty-friendly messages and print-friendly layout (page break before availability).
 
+### H Muhamadi
+- Finished `modules/members/Member.php`, `modules/members/list.php`, `modules/members/form.php`, and `modules/members/history.php` (member model, searchable directory UI, registration/edit form, and borrowing history view).
+
 (Other members: add your own entry here when you finish your files.)
 
 ### Augustin Mugisha
