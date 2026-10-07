@@ -1,0 +1,309 @@
+[1mdiff --git a/modules/circulation/Loan.php b/modules/circulation/Loan.php[m
+[1mindex 11c3927..7a522b6 100644[m
+[1m--- a/modules/circulation/Loan.php[m
+[1m+++ b/modules/circulation/Loan.php[m
+[36m@@ -3,13 +3,302 @@[m
+  * File: Loan.php[m
+  * Module: Circulation[m
+  * Assigned to: Shalom K[m
+[31m- * Status: TODO[m
+[31m- * Description: Loan transactions OOP model[m
+[32m+[m[32m * Status: DONE[m
+[32m+[m[32m * Description: Loan / borrow / return OOP model (owns DB transactions)[m
+  */[m
+ [m
+ // Use require_once __DIR__ . '/../../config/Database.php'; so paths work from any folder.[m
+[32m+[m[32mrequire_once __DIR__ . '/../../config/functions.php';[m
+[32m+[m[32mrequire_once __DIR__ . '/../catalog/Book.php';[m
+[32m+[m[32mrequire_once __DIR__ . '/../members/Member.php';[m
+[32m+[m[32mrequire_once __DIR__ . '/../fines/Fine.php';[m
+ [m
+ class Loan[m
+ {[m
+[32m+[m[32m    // ------------------------------------------------------------[m
+[32m+[m[32m    // Public API[m
+[32m+[m[32m    // ------------------------------------------------------------[m
+ [m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Create a new loan transactionally.[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * Locks the book row (FOR UPDATE), runs business-rule checks against the DB state,[m
+[32m+[m[32m     * decrements the available copies count, inserts a new loan row, and commits.[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @param mixed $memberId     Positive integer member_id[m
+[32m+[m[32m     * @param mixed $bookId       Positive integer book_id[m
+[32m+[m[32m     * @param mixed $librarianId  Positive integer librarian_id issuing the loan[m
+[32m+[m[32m     * @return int                new loan_id (lastInsertId)[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @throws ValidationException  if any id is not a positive integer[m
+[32m+[m[32m     * @throws NotFoundException    if member or book does not exist[m
+[32m+[m[32m     * @throws BusinessRuleException on any rule violation (inactive member, no copies,[m
+[32m+[m[32m     *                               unpaid fines, max loans reached, duplicate unreturned loan)[m
+[32m+[m[32m     * @throws DatabaseException    on wrapped DB errors (from Database class)[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public static function borrow($memberId, $bookId, $librarianId): int[m
+[32m+[m[32m    {[m
+[32m+[m[32m        // --- Step 1: validate IDs as positive integers ---[m
+[32m+[m[32m        $memberId    = self::validateId($memberId, 'Member ID');[m
+[32m+[m[32m        $bookId      = self::validateId($bookId,   'Book ID');[m
+[32m+[m[32m        $librarianId = self::validateId($librarianId, 'Librarian ID');[m
+[32m+[m
+[32m+[m[32m        $pdo = Database::getInstance()->getConnection();[m
+[32m+[m
+[32m+[m[32m        // --- Step 2: start transaction, lock book row FOR UPDATE ---[m
+[32m+[m[32m        $startedTx = false;[m
+[32m+[m[32m        try {[m
+[32m+[m[32m            $pdo->beginTransaction();[m
+[32m+[m[32m            $startedTx = true;[m
+[32m+[m
+[32m+[m[32m            $stmt = $pdo->prepare('SELECT * FROM books WHERE book_id = ? FOR UPDATE');[m
+[32m+[m[32m            $stmt->execute([$bookId]);[m
+[32m+[m[32m            $book = $stmt->fetch(PDO::FETCH_ASSOC);[m
+[32m+[m[32m            if (!$book) {[m
+[32m+[m[32m                throw new NotFoundException('Book not found.');[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            // --- Step 3: business rule checks (order matters to give a clear error first) ---[m
+[32m+[m
+[32m+[m[32m            // 3a. Member exists (Member::find throws NotFoundException if missing) and is active.[m
+[32m+[m[32m            $member = Member::find($memberId);[m
+[32m+[m[32m            if (!Member::isActive($memberId)) {[m
+[32m+[m[32m                throw new BusinessRuleException('This member is inactive and cannot borrow books.');[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            // 3b. Book has at least 1 available copy right now (freshly locked row).[m
+[32m+[m[32m            if ((int) $book['available_copies'] < 1) {[m
+[32m+[m[32m                throw new BusinessRuleException('No copies of this book are available right now.');[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            // 3c. Member has no unpaid fines.[m
+[32m+[m[32m            if (Fine::hasUnpaid($memberId)) {[m
+[32m+[m[32m                throw new BusinessRuleException("Clear the member's unpaid fines first.");[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            // 3d. Member has fewer than MAX_LOANS active (unreturned) loans already.[m
+[32m+[m[32m            if (Member::countActiveLoans($memberId) >= MAX_LOANS) {[m
+[32m+[m[32m                throw new BusinessRuleException([m
+[32m+[m[32m                    'This member already has ' . MAX_LOANS . ' active loans. Return a book first.'[m
+[32m+[m[32m                );[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            // 3e. Member does NOT already hold an unreturned copy of this exact book.[m
+[32m+[m[32m            $dup = $pdo->prepare([m
+[32m+[m[32m                'SELECT 1 FROM loans[m
+[32m+[m[32m                  WHERE member_id = ? AND book_id = ? AND return_date IS NULL[m
+[32m+[m[32m                  LIMIT 1'[m
+[32m+[m[32m            );[m
+[32m+[m[32m            $dup->execute([$memberId, $bookId]);[m
+[32m+[m[32m            if ($dup->fetchColumn() !== false) {[m
+[32m+[m[32m                throw new BusinessRuleException([m
+[32m+[m[32m                    'This member already has an unreturned copy of this book.'[m
+[32m+[m[32m                );[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            // --- Step 4: decrement available, insert loan row ---[m
+[32m+[m[32m            Book::decrementAvailable($bookId);[m
+[32m+[m
+[32m+[m[32m            $todayObj = new DateTime('today');[m
+[32m+[m[32m            $dueObj   = clone $todayObj;[m
+[32m+[m[32m            $dueObj->modify('+' . LOAN_DAYS . ' days');[m
+[32m+[m
+[32m+[m[32m            $insert = $pdo->prepare([m
+[32m+[m[32m                'INSERT INTO loans (book_id, member_id, librarian_id, issue_date, due_date, return_date, status)[m
+[32m+[m[32m                 VALUES (?, ?, ?, ?, ?, NULL, ?)'[m
+[32m+[m[32m            );[m
+[32m+[m[32m            $insert->execute([[m
+[32m+[m[32m                $bookId,[m
+[32m+[m[32m                $memberId,[m
+[32m+[m[32m                $librarianId,[m
+[32m+[m[32m                $todayObj->format('Y-m-d'),[m
+[32m+[m[32m                $dueObj->format('Y-m-d'),[m
+[32m+[m[32m                'borrowed',[m
+[32m+[m[32m            ]);[m
+[32m+[m[32m            $loanId = (int) $pdo->lastInsertId();[m
+[32m+[m
+[32m+[m[32m            // --- Step 5: commit and return the new loan id ---[m
+[32m+[m[32m            $pdo->commit();[m
+[32m+[m[32m            return $loanId;[m
+[32m+[m
+[32m+[m[32m        } catch (Throwable $e) {[m
+[32m+[m[32m            // Roll back if the transaction was ever started and is still open.[m
+[32m+[m[32m            if ($startedTx && $pdo->inTransaction()) {[m
+[32m+[m[32m                $pdo->rollBack();[m
+[32m+[m[32m            }[m
+[32m+[m[32m            throw $e;[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Return a loan transactionally.[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * Locks the loan row, sets return_date + status, increments the book's available copies,[m
+[32m+[m[32m     * calculates the overdue fine, and (if > 0) creates a fine record.[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @param mixed $loanId  Positive integer loan_id[m
+[32m+[m[32m     * @return array  ['loan_id' => int, 'days_late' => int, 'fine' => float][m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @throws ValidationException  bad id[m
+[32m+[m[32m     * @throws NotFoundException    loan not found[m
+[32m+[m[32m     * @throws BusinessRuleException loan already returned, or fine > 0 but Fine::create failed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public static function return($loanId): array[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $loanId = self::validateId($loanId, 'Loan ID');[m
+[32m+[m[32m        $pdo    = Database::getInstance()->getConnection();[m
+[32m+[m
+[32m+[m[32m        $startedTx = false;[m
+[32m+[m[32m        try {[m
+[32m+[m[32m            $pdo->beginTransaction();[m
+[32m+[m[32m            $startedTx = true;[m
+[32m+[m
+[32m+[m[32m            // --- Step 1: lock the loan row; throw if missing or already returned ---[m
+[32m+[m[32m            $stmt = $pdo->prepare('SELECT * FROM loans WHERE loan_id = ? FOR UPDATE');[m
+[32m+[m[32m            $stmt->execute([$loanId]);[m
+[32m+[m[32m            $loan = $stmt->fetch(PDO::FETCH_ASSOC);[m
+[32m+[m[32m            if (!$loan) {[m
+[32m+[m[32m                throw new NotFoundException('Loan not found.');[m
+[32m+[m[32m            }[m
+[32m+[m[32m            if ($loan['return_date'] !== null && $loan['return_date'] !== '') {[m
+[32m+[m[32m                throw new BusinessRuleException('This book was already returned.');[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            // --- Step 2: update loan return_date/status and increment the book ---[m
+[32m+[m[32m            $todayObj     = new DateTime('today');[m
+[32m+[m[32m            $todayStr     = $todayObj->format('Y-m-d');[m
+[32m+[m[32m            $dueDateStr   = $loan['due_date'];[m
+[32m+[m[32m            $bookId       = (int) $loan['book_id'];[m
+[32m+[m
+[32m+[m[32m            $upd = $pdo->prepare([m
+[32m+[m[32m                'UPDATE loans SET return_date = ?, status = ? WHERE loan_id = ?'[m
+[32m+[m[32m            );[m
+[32m+[m[32m            $upd->execute([$todayStr, 'returned', $loanId]);[m
+[32m+[m
+[32m+[m[32m            Book::incrementAvailable($bookId);[m
+[32m+[m
+[32m+[m[32m            // --- Step 3: calculate fine; if > 0 create a fine row ---[m
+[32m+[m[32m            $fineAmount = Fine::calculate($dueDateStr, $todayStr);[m
+[32m+[m[32m            if ($fineAmount > 0) {[m
+[32m+[m[32m                Fine::create($loanId, $fineAmount);[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            // --- Step 4: commit ---[m
+[32m+[m[32m            $pdo->commit();[m
+[32m+[m
+[32m+[m[32m            $daysLate = 0;[m
+[32m+[m[32m            $dueObj   = DateTime::createFromFormat('!Y-m-d', $dueDateStr);[m
+[32m+[m[32m            if ($dueObj instanceof DateTime) {[m
+[32m+[m[32m                $daysLate = max(0, (int) $dueObj->diff($todayObj)->format('%r%a'));[m
+[32m+[m[32m            }[m
+[32m+[m[32m            return [[m
+[32m+[m[32m                'loan_id'   => $loanId,[m
+[32m+[m[32m                'days_late' => $daysLate,[m
+[32m+[m[32m                'fine'      => $fineAmount,[m
+[32m+[m[32m            ];[m
+[32m+[m
+[32m+[m[32m        } catch (Throwable $e) {[m
+[32m+[m[32m            if ($startedTx && $pdo->inTransaction()) {[m
+[32m+[m[32m                $pdo->rollBack();[m
+[32m+[m[32m            }[m
+[32m+[m[32m            throw $e;[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Promote any "borrowed" unreturned loans whose due date has passed to "overdue".[m
+[32m+[m[32m     * Idempotent: safe to call on every page load, in a cron job, or from the list methods.[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @return int number of rows updated[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public static function markOverdue(): int[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $pdo = Database::getInstance()->getConnection();[m
+[32m+[m[32m        $stmt = $pdo->prepare([m
+[32m+[m[32m            "UPDATE loans[m
+[32m+[m[32m                SET status = 'overdue'[m
+[32m+[m[32m              WHERE return_date IS NULL[m
+[32m+[m[32m                AND due_date < CURDATE()[m
+[32m+[m[32m                AND status = 'borrowed'"[m
+[32m+[m[32m        );[m
+[32m+[m[32m        $stmt->execute();[m
+[32m+[m[32m        return $stmt->rowCount();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Return all currently unreturned loans (status borrowed OR overdue) enriched with[m
+[32m+[m[32m     * member name, book title, days overdue and estimated fine.[m
+[32m+[m[32m     * Calls markOverdue() first so statuses are always up to date.[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public static function getActiveLoans(): array[m
+[32m+[m[32m    {[m
+[32m+[m[32m        self::markOverdue();[m
+[32m+[m[32m        $pdo = Database::getInstance()->getConnection();[m
+[32m+[m
+[32m+[m[32m        $sql = "SELECT l.loan_id, l.book_id, l.member_id, l.issue_date, l.due_date, l.status,[m
+[32m+[m[32m                       m.full_name AS member_name,[m
+[32m+[m[32m                       b.title AS book_title,[m
+[32m+[m[32m                       CASE[m
+[32m+[m[32m                         WHEN l.due_date < CURDATE() THEN DATEDIFF(CURDATE(), l.due_date)[m
+[32m+[m[32m                         ELSE 0[m
+[32m+[m[32m                       END AS days_overdue,[m
+[32m+[m[32m                       CASE[m
+[32m+[m[32m                         WHEN l.due_date < CURDATE() THEN DATEDIFF(CURDATE(), l.due_date) * ?[m
+[32m+[m[32m                         ELSE 0[m
+[32m+[m[32m                       END AS estimated_fine[m
+[32m+[m[32m                  FROM loans l[m
+[32m+[m[32m                  JOIN members m ON m.member_id = l.member_id[m
+[32m+[m[32m                  JOIN books   b ON b.book_id   = l.book_id[m
+[32m+[m[32m                 WHERE l.return_date IS NULL[m
+[32m+[m[32m                 ORDER BY l.status DESC, l.due_date ASC, l.loan_id DESC";[m
+[32m+[m
+[32m+[m[32m        $stmt = $pdo->prepare($sql);[m
+[32m+[m[32m        $stmt->execute([DAILY_FINE]);[m
+[32m+[m[32m        return $stmt->fetchAll(PDO::FETCH_ASSOC);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Return only the overdue loans, most overdue first.[m
+[32m+[m[32m     * Calls markOverdue() first so statuses are always up to date.[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public static function getOverdue(): array[m
+[32m+[m[32m    {[m
+[32m+[m[32m        self::markOverdue();[m
+[32m+[m[32m        $pdo = Database::getInstance()->getConnection();[m
+[32m+[m
+[32m+[m[32m        $sql = "SELECT l.loan_id, l.book_id, l.member_id, l.issue_date, l.due_date, l.status,[m
+[32m+[m[32m                       m.full_name AS member_name,[m
+[32m+[m[32m                       b.title AS book_title,[m
+[32m+[m[32m                       DATEDIFF(CURDATE(), l.due_date) AS days_overdue,[m
+[32m+[m[32m                       (DATEDIFF(CURDATE(), l.due_date) * ?) AS estimated_fine[m
+[32m+[m[32m                  FROM loans l[m
+[32m+[m[32m                  JOIN members m ON m.member_id = l.member_id[m
+[32m+[m[32m                  JOIN books   b ON b.book_id   = l.book_id[m
+[32m+[m[32m                 WHERE l.return_date IS NULL[m
+[32m+[m[32m                   AND l.due_date < CURDATE()[m
+[32m+[m[32m                 ORDER BY days_overdue DESC, l.loan_id DESC";[m
+[32m+[m
+[32m+[m[32m        $stmt = $pdo->prepare($sql);[m
+[32m+[m[32m        $stmt->execute([DAILY_FINE]);[m
+[32m+[m[32m        return $stmt->fetchAll(PDO::FETCH_ASSOC);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // ------------------------------------------------------------[m
+[32m+[m[32m    // Internal helpers[m
+[32m+[m[32m    // ------------------------------------------------------------[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Validate that a user-supplied id is a positive integer (accepts numeric strings too).[m
+[32m+[m[32m     * Returns the id as int on success; throws ValidationException otherwise.[m
+[32m+[m[32m     */[m
+[32m+[m[32m    private static function validateId($value, string $label): int[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $number = is_scalar($value)[m
+[32m+[m[32m            ? filter_var(trim((string) $value), FILTER_VALIDATE_INT)[m
+[32m+[m[32m            : false;[m
+[32m+[m[32m        if ($number === false || $number < 1) {[m
+[32m+[m[32m            throw new ValidationException($label . ' must be a positive whole number.');[m
+[32m+[m[32m        }[m
+[32m+[m[32m        return (int) $number;[m
+[32m+[m[32m    }[m
+ }[m

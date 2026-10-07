@@ -3,13 +3,15 @@
  * File: Category.php
  * Module: Catalog
  * Assigned to: Augustin Mugisha
- * Status: TODO
+ * Status: DONE
  * Description: Book category OOP model
  */
 
-// Use require_once __DIR__ . '/../../config/Database.php'; so paths work from any folder.
+require_once __DIR__ . '/LookupEntity.php';
 
-class Category
+class Category extends LookupEntity
 {
-
+	protected const TABLE = 'categories';
+	protected const ID_COLUMN = 'category_id';
+	protected const LABEL = 'Category';
 }

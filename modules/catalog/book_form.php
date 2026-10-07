@@ -121,8 +121,9 @@ require_once __DIR__ . '/../../includes/header.php';
 			<input class="form-control" type="number" id="total_copies" name="total_copies" min="1" required value="<?= e($values['total_copies']) ?>">
 		</div>
 		<div class="col-md-4">
-			<label class="form-label" for="available_copies">Available copies</label>
-			<input class="form-control" type="number" id="available_copies" name="available_copies" min="0" required value="<?= e($values['available_copies']) ?>">
+			<label class="form-label">Availability</label>
+			<div class="form-control bg-light">Managed automatically</div>
+			<div class="form-text">Calculated from total copies and books currently on loan.</div>
 		</div>
 		<div class="col-12">
 			<label class="form-label" for="author_ids">Authors</label>

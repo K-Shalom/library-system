@@ -104,19 +104,21 @@ class Fine
 	// Record payment once and reject missing or already-paid fines.
 	public static function markPaid($fineId): void
 	{
+		$fineId = self::validateId($fineId);
 		$pdo = Database::getInstance()->getConnection();
-		$check = $pdo->prepare('SELECT paid FROM fines WHERE fine_id = :fine_id');
-		$check->execute(['fine_id' => $fineId]);
+		$stmt = $pdo->prepare('UPDATE fines SET paid = 1, paid_at = NOW() WHERE fine_id = ? AND paid = 0');
+		$stmt->execute([$fineId]);
+		if ($stmt->rowCount() === 1) {
+			return;
+		}
+
+		$check = $pdo->prepare('SELECT paid FROM fines WHERE fine_id = ?');
+		$check->execute([$fineId]);
 		$paid = $check->fetchColumn();
 		if ($paid === false) {
 			throw new NotFoundException('Fine not found.');
 		}
-		if ((int) $paid === 1) {
-			throw new BusinessRuleException('This fine has already been paid.');
-		}
-
-		$stmt = $pdo->prepare('UPDATE fines SET paid = 1, paid_at = NOW() WHERE fine_id = :fine_id');
-		$stmt->execute(['fine_id' => $fineId]);
+		throw new BusinessRuleException('This fine has already been paid.');
 	}
 
 	// Return the sum of all fines that have not been paid yet.
@@ -125,6 +127,15 @@ class Fine
 		$pdo = Database::getInstance()->getConnection();
 		$stmt = $pdo->query('SELECT COALESCE(SUM(amount), 0) FROM fines WHERE paid = 0');
 		return (float) $stmt->fetchColumn();
+	}
+
+	private static function validateId($value): int
+	{
+		$id = is_scalar($value) ? filter_var(trim((string) $value), FILTER_VALIDATE_INT) : false;
+		if ($id === false || $id < 1) {
+			throw new ValidationException('Fine ID must be a positive whole number.');
+		}
+		return (int) $id;
 	}
 
 }

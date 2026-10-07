@@ -56,6 +56,7 @@ class Book
 	public static function create(array $data, array $authorIds): int
 	{
 		$pdo = Database::getInstance()->getConnection();
+		$data['available_copies'] = $data['total_copies'] ?? null;
 		$book = self::validateData($pdo, $data);
 		$authorIds = self::validateAuthors($pdo, $authorIds);
 		$ownsTransaction = !$pdo->inTransaction();
@@ -91,15 +92,26 @@ class Book
 	{
 		$pdo = Database::getInstance()->getConnection();
 		$id = self::validateId($id, 'Book ID');
-		self::ensureBookExists($pdo, $id);
-		$book = self::validateData($pdo, $data, $id);
-		$authorIds = self::validateAuthors($pdo, $authorIds);
 		$ownsTransaction = !$pdo->inTransaction();
 
 		if ($ownsTransaction) {
 			$pdo->beginTransaction();
 		}
 		try {
+			$lock = $pdo->prepare('SELECT total_copies, available_copies FROM books WHERE book_id = ? FOR UPDATE');
+			$lock->execute([$id]);
+			$current = $lock->fetch(PDO::FETCH_ASSOC);
+			if (!$current) {
+				throw new NotFoundException('Book not found.');
+			}
+			$totalCopies = self::validateInteger($data['total_copies'] ?? null, 'Total copies', 1);
+			$borrowedCopies = (int) $current['total_copies'] - (int) $current['available_copies'];
+			if ($totalCopies < $borrowedCopies) {
+				throw new BusinessRuleException('Total copies cannot be less than the number currently on loan (' . $borrowedCopies . ').');
+			}
+			$data['available_copies'] = $totalCopies - $borrowedCopies;
+			$book = self::validateData($pdo, $data, $id);
+			$authorIds = self::validateAuthors($pdo, $authorIds);
 			$stmt = $pdo->prepare(
 				'UPDATE books SET title = ?, isbn = ?, category_id = ?, publisher_id = ?,
 				 published_year = ?, total_copies = ?, available_copies = ? WHERE book_id = ?'

@@ -7,8 +7,11 @@ Group 3 project: a database-driven PHP application (PHP 8, PDO, prepared stateme
 1. Copy or symlink this folder into the XAMPP web root (on Linux: `/opt/lampp/htdocs/library-system`).
 2. Start Apache and MySQL/MariaDB in XAMPP.
 3. Import the database: open `http://localhost/phpmyadmin`, then Import, then choose `database.sql`. Or run: `/opt/lampp/bin/mysql -u root < database.sql`
+	**Warning:** `database.sql` drops and recreates `library_db`. Back up any existing data before importing.
 4. Make sure the `logs/` folder is writable by the web server.
 5. Open `http://localhost/library-system/`
+
+Run the database-backed integration checks against a development database with `php tests/run-integration.php`.
 
 ## Default credentials (development / sample data only)
 
@@ -35,13 +38,13 @@ Database name: `library_db`. Host: `localhost`. These are sample credentials for
 
 | Member | Module / files | Status |
 |---|---|---|
-| Shalom K (group admin) | `database.sql`, `config/Database.php`, `config/exceptions.php` | DONE |
-| Shalom K | `modules/circulation/` (Loan, borrow, return) | TODO |
-| Jose Narame | `modules/auth/`, `config/functions.php`, `error.php` | TODO |
-| Sabin Levis | `includes/`, `assets/`, `index.php`, `modules/reports/` | TODO |
-| Adeline N | `modules/catalog/` (Book, books, book_form) | TODO |
-| Augustin Mugisha | `modules/catalog/` (Author, Publisher, Category, lookups), `modules/fines/` | TODO |
-| H Muhamadi | `modules/members/` | TODO |
+| Shalom K (group admin) | `database.sql`, `config/Database.php`, `config/exceptions.php` | Implemented |
+| Shalom K | `modules/circulation/` (Loan, borrow, return) | Implemented |
+| Jose Narame | `modules/auth/`, `config/functions.php`, `error.php` | Implemented |
+| Sabin Levis | `includes/`, `assets/`, `index.php`, `modules/reports/` | Implemented |
+| Adeline N | `modules/catalog/` (Book, books, book_form) | Implemented |
+| Augustin Mugisha | `modules/catalog/` (Author, Publisher, Category, lookups), `modules/fines/` | Implemented |
+| H Muhamadi | `modules/members/` | Implemented |
 
 ## Progress log
 
@@ -71,6 +74,12 @@ Database name: `library_db`. Host: `localhost`. These are sample credentials for
 ### Augustin Mugisha
 - Finished `modules/fines/Fine.php` (fine calculation, unpaid-fine checks, creation, lookup, listing, payment, and unpaid total).
 
+### Completion work
+- Implemented lookup CRUD, fine payment UI, and librarian account management.
+- Made book availability derive from outstanding loans during catalog edits.
+- Added ER/UML diagrams, a technical report, a presentation outline, and database-backed integration tests.
+- Integration test record: 6 checks passed on 2026-10-07. Browser-level manual cases remain listed as pending in `tests/test-cases.md`.
+
 ## Team workflow
 
 1. `git clone https://github.com/K-Shalom/library-system.git`
@@ -81,4 +90,14 @@ Database name: `library_db`. Host: `localhost`. These are sample credentials for
 
 ## Deliverables
 
-Working PHP application, database script, UML class diagram, ER diagram, source code, test cases and results, technical report, screenshots, individual contribution reports, and the group presentation. Documents go in `docs/` and `tests/`.
+The PHP application and database script are in the project root and module folders. Supporting artifacts:
+
+- [ER diagram](docs/er-diagram.md)
+- [UML class diagram](docs/uml-class-diagram.md)
+- [Technical report](docs/technical-report.md)
+- [Test cases and results](tests/test-cases.md)
+- [Integration test runner](tests/run-integration.php)
+- [Presentation outline](docs/presentation-outline.md)
+- [Individual contribution report template](docs/contributions/template.md)
+
+Screenshots are in `tests/screenshots/`. Each student must complete and sign an individual report; the group must still deliver and present the practical demonstration.

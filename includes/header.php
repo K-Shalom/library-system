@@ -73,6 +73,10 @@ $reportsActive = nav_active('/modules/reports/');
                            href="<?= e(BASE_URL) ?>/modules/members/list.php">Members</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link <?= nav_active('/modules/auth/librarians.php') ?>"
+                           href="<?= e(BASE_URL) ?>/modules/auth/librarians.php">Librarians</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link <?= nav_active('/modules/circulation/borrow.php') ?>"
                            href="<?= e(BASE_URL) ?>/modules/circulation/borrow.php">Borrow</a>
                     </li>

@@ -3,13 +3,15 @@
  * File: Author.php
  * Module: Catalog
  * Assigned to: Augustin Mugisha
- * Status: TODO
+ * Status: DONE
  * Description: Author lookup OOP model
  */
 
-// Use require_once __DIR__ . '/../../config/Database.php'; so paths work from any folder.
+require_once __DIR__ . '/LookupEntity.php';
 
-class Author
+class Author extends LookupEntity
 {
-
+	protected const TABLE = 'authors';
+	protected const ID_COLUMN = 'author_id';
+	protected const LABEL = 'Author';
 }

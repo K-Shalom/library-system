@@ -3,13 +3,15 @@
  * File: Publisher.php
  * Module: Catalog
  * Assigned to: Augustin Mugisha
- * Status: TODO
+ * Status: DONE
  * Description: Publisher lookup OOP model
  */
 
-// Use require_once __DIR__ . '/../../config/Database.php'; so paths work from any folder.
+require_once __DIR__ . '/LookupEntity.php';
 
-class Publisher
+class Publisher extends LookupEntity
 {
-
+	protected const TABLE = 'publishers';
+	protected const ID_COLUMN = 'publisher_id';
+	protected const LABEL = 'Publisher';
 }
