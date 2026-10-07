@@ -65,6 +65,9 @@ Database name: `library_db`. Host: `localhost`. These are sample credentials for
 
 (Other members: add your own entry here when you finish your files.)
 
+### Augustin Mugisha
+- Finished `modules/fines/Fine.php` (fine calculation, unpaid-fine checks, creation, lookup, listing, payment, and unpaid total).
+
 ## Team workflow
 
 1. `git clone https://github.com/K-Shalom/library-system.git`
