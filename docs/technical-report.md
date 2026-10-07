@@ -2,11 +2,10 @@
 
 ## Submission Details
 
-- Institution: [Enter college name]
-- Course/module: [Enter course or module]
-- Lecturer: [Enter lecturer name]
+- Institution: RP Karongi College
+- Course/module: Advanced Web Technology
 - Group: 3
-- Submission date: [Enter submission date]
+- Submission date: 01 October 2026
 - Group members: Shalom K, Jose Narame, Sabin Levis, Adeline N, Augustin Mugisha, H Muhamadi
 
 ## 1. Overview
