@@ -54,6 +54,15 @@ Database name: `library_db`. Host: `localhost`. These are sample credentials for
 ### Jose Narame
 - Finished `config/functions.php` (helpers, flash, CSRF, validation), `modules/auth/Librarian.php`, `modules/auth/login.php`, `modules/auth/logout.php`, and `error.php`.
 
+### Adeline N
+- Finished `modules/catalog/Book.php` (Book model with find, all, search, create, update, delete, hasActiveLoans, decrementAvailable, incrementAvailable), `modules/catalog/books.php` (catalog listing + search + delete), and `modules/catalog/book_form.php` (add/edit book form).
+
+### Sabin Levis
+- Finished `includes/header.php` (Bootstrap 5.3 CDN head + responsive navbar with all module links, Reports dropdown, librarian name, logout; opens container + calls show_flash() with active-page highlighting), `includes/footer.php` (closes container, Group 3 footer text, Bootstrap JS bundle), `assets/style.css` (stat cards, tables, status badges, full @media print styles with .print-hide and .print-header helpers).
+- Finished `index.php` dashboard: 6 stat cards (book titles, available copies, active members, active loans, overdue loans, unpaid fines in RWF), 4 quick-action buttons, 5-most-recent-loans table with status badges, direct PDO read-only prepared statements so no dependency on other model classes.
+- Finished `modules/reports/overdue.php`: sorted-by-most-overdue table with member name/phone, book title, issue/due dates, days-overdue badge, per-row estimated fine (days × DAILY_FINE RWF), total estimated footer; empty friendly message when no overdue; Print button + print-friendly styles.
+- Finished `modules/reports/reports.php`: validated date-range filter (both dates required, real YYYY-MM-DD, from ≤ to), 4 sections — circulation overview (issued / returned / still out), top-5 most borrowed books, availability snapshot (total / available / borrowed / status badge), fines (collected in period vs outstanding current vs total); all with empty-friendly messages and print-friendly layout (page break before availability).
+
 (Other members: add your own entry here when you finish your files.)
 
 ## Team workflow

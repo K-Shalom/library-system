@@ -2,6 +2,272 @@
  * File: style.css
  * Module: Core
  * Assigned to: Sabin Levis
- * Status: TODO
- * Description: Custom dashboard layout styles
+ * Status: DONE
+ * Description: Custom dashboard layout styles + print styles for reports
  */
+
+/* ============================================================
+   Base layout
+   ============================================================ */
+
+html, body {
+    min-height: 100vh;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #212529;
+}
+
+main.container {
+    flex: 1;
+}
+
+.footer {
+    margin-top: auto;
+}
+
+/* ============================================================
+   Cards: consistent shadow, borders, hover
+   ============================================================ */
+
+.card {
+    border: 1px solid #e9ecef;
+    border-radius: 0.5rem;
+    background-color: #ffffff;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    font-weight: 600;
+}
+
+/* Dashboard stat cards */
+.stat-card {
+    border-left: 4px solid #0d6efd;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.08);
+}
+
+.stat-card.stat-books   { border-left-color: #0d6efd; }
+.stat-card.stat-avail   { border-left-color: #198754; }
+.stat-card.stat-members { border-left-color: #6f42c1; }
+.stat-card.stat-loans   { border-left-color: #fd7e14; }
+.stat-card.stat-overdue { border-left-color: #dc3545; }
+.stat-card.stat-fines   { border-left-color: #0dcaf0; }
+
+.stat-card .stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.stat-card .stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-top: 0.25rem;
+}
+
+.stat-card .stat-icon {
+    font-size: 2rem;
+    opacity: 0.5;
+}
+
+/* ============================================================
+   Tables
+   ============================================================ */
+
+.table > thead > tr > th {
+    border-bottom: 2px solid #dee2e6;
+    background-color: #f8f9fa;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.table tbody tr {
+    transition: background-color 0.1s ease;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+/* ============================================================
+   Status badges / pill
+   ============================================================ */
+
+.badge {
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+.status-borrowed  { background-color: #198754 !important; }
+.status-returned  { background-color: #6c757d !important; }
+.status-overdue   { background-color: #dc3545 !important; }
+.status-active    { background-color: #198754 !important; }
+.status-inactive  { background-color: #6c757d !important; }
+
+/* ============================================================
+   Navbar fine-tuning
+   ============================================================ */
+
+.navbar-primary {
+    background-color: #0d6efd !important;
+}
+
+.navbar .nav-link {
+    position: relative;
+    padding: 0.5rem 0.9rem;
+}
+
+.navbar .nav-link.active {
+    font-weight: 600;
+    background-color: rgba(255, 255, 255, 0.12);
+    border-radius: 0.35rem;
+}
+
+.dropdown-item.active {
+    background-color: #0d6efd;
+    color: #fff;
+}
+
+/* ============================================================
+   Forms
+   ============================================================ */
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.35rem;
+}
+
+.form-text {
+    font-size: 0.8rem;
+}
+
+/* ============================================================
+   Alerts
+   ============================================================ */
+
+.alert {
+    border-radius: 0.5rem;
+    border: none;
+}
+
+.alert-danger  { background-color: #f8d7da; color: #842029; }
+.alert-success { background-color: #d1e7dd; color: #0f5132; }
+.alert-warning { background-color: #fff3cd; color: #664d03; }
+.alert-info    { background-color: #cff4fc; color: #055160; }
+
+/* ============================================================
+   Print styles (used by reports pages)
+   Add class `print-hide` to any elements that should NOT appear
+   on a printed page (navs, buttons, search bars, etc.).
+   ============================================================ */
+
+@media print {
+    /* Hide navigation, buttons, forms, footer, flash messages on paper */
+    .print-hide,
+    nav,
+    .navbar,
+    footer,
+    .btn,
+    form,
+    .alert,
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background: #ffffff !important;
+        color: #000 !important;
+        font-size: 11pt;
+    }
+
+    /* Remove the container left/right padding so content uses full page width */
+    .container {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    main.container {
+        padding: 0 !important;
+    }
+
+    /* Cards should look plain when printed (no shadows, no coloured backgrounds) */
+    .card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+        background: #ffffff !important;
+    }
+
+    .card-header {
+        background: #f0f0f0 !important;
+        border-bottom: 1px solid #000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .table {
+        border: 1px solid #000;
+    }
+
+    .table > thead > tr > th {
+        background: #e0e0e0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        border-bottom: 1px solid #000 !important;
+    }
+
+    .table td, .table th {
+        border: 1px solid #dee2e6 !important;
+        padding: 0.35rem 0.5rem;
+    }
+
+    /* Print a small page header with report title and date */
+    .print-header {
+        display: block !important;
+        text-align: center;
+        margin-bottom: 1.2rem;
+        padding-bottom: 0.6rem;
+        border-bottom: 2px solid #000;
+    }
+
+    .print-header h1 {
+        font-size: 16pt;
+        margin: 0 0 0.15rem 0;
+    }
+
+    .print-header p {
+        font-size: 10pt;
+        color: #444;
+        margin: 0;
+    }
+
+    .page-break {
+        page-break-before: always;
+    }
+
+    a {
+        text-decoration: none !important;
+        color: inherit !important;
+    }
+}
+
+/* Hidden by default on screen, shown only on paper */
+.print-header {
+    display: none;
+}
