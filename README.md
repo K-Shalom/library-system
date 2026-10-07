@@ -78,7 +78,7 @@ Database name: `library_db`. Host: `localhost`. These are sample credentials for
 - Implemented lookup CRUD, fine payment UI, and librarian account management.
 - Made book availability derive from outstanding loans during catalog edits.
 - Added ER/UML diagrams, a technical report, a presentation outline, and database-backed integration tests.
-- Integration test record: 6 checks passed on 2026-10-07. Browser-level manual cases remain listed as pending in `tests/test-cases.md`.
+- Integration test record: 6 checks passed on 2026-10-08. Browser-level manual cases remain listed as pending in `tests/test-cases.md`.
 
 ## Team workflow
 
@@ -98,6 +98,7 @@ The PHP application and database script are in the project root and module folde
 - [Test cases and results](tests/test-cases.md)
 - [Integration test runner](tests/run-integration.php)
 - [Presentation outline](docs/presentation-outline.md)
-- [Individual contribution report template](docs/contributions/template.md)
+- [Individual contribution reports](docs/contributions/individual-reports.md)
+- [Blank contribution report template](docs/contributions/template.md)
 
 Screenshots are in `tests/screenshots/`. Each student must complete and sign an individual report; the group must still deliver and present the practical demonstration.

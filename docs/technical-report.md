@@ -1,4 +1,13 @@
-# College Library and Book Circulation Management System
+# Technical Report: College Library and Book Circulation Management System
+
+## Submission Details
+
+- Institution: [Enter college name]
+- Course/module: [Enter course or module]
+- Lecturer: [Enter lecturer name]
+- Group: 3
+- Submission date: [Enter submission date]
+- Group members: Shalom K, Jose Narame, Sabin Levis, Adeline N, Augustin Mugisha, H Muhamadi
 
 ## 1. Overview
 
@@ -9,6 +18,15 @@ The system replaces manual circulation registers with a centralized PHP applicat
 The primary user is a librarian. A librarian can authenticate, maintain catalog and member records, issue and return books, view member borrowing history, record fine payments, and review overdue and circulation reports.
 
 The application rejects borrowing when a member is inactive, has unpaid fines, has reached the active-loan limit, already holds the same book, or when no copy is available. Returns cannot be repeated. Book availability is reconciled with outstanding loans when catalog stock is changed.
+
+| Requirement area | Implemented support |
+|---|---|
+| Catalog | Book registration, editing, searching, availability, authors, publishers, and categories |
+| Members and staff | Member registration, editing, search, history, librarian login, and librarian account management |
+| Circulation | Book issue and return with availability updates and circulation-rule checks |
+| Overdue and fines | Overdue identification, late-return fine calculation, outstanding-fine checks, and payment recording |
+| Reporting | Overdue report, circulation summary, most-borrowed titles, availability, and fine totals |
+| Error handling | Input validation, not-found and business-rule messages, safe error page, and server-side logging |
 
 ## 3. Architecture
 
@@ -51,4 +69,47 @@ Follow the XAMPP instructions in [`README.md`](../README.md). Import the schema 
 
 ## 9. Deliverable Status
 
-The PHP source, database script, ER diagram, UML class diagram, technical report, integration test script, and test record are present in the project. The group should complete and sign one contribution report per student using the [contribution template](contributions/template.md). The presentation itself is a group activity; an outline and demonstration sequence are provided in [presentation-outline.md](presentation-outline.md).
+The PHP source, database script, ER diagram, UML class diagram, technical report, integration test script, and test record are present in the project. Each student should complete and sign their section in the [individual contribution reports](contributions/individual-reports.md). The presentation itself is a group activity; an outline and demonstration sequence are provided in [presentation-outline.md](presentation-outline.md).
+
+## 10. Conclusion
+
+The application provides a centralized way for librarians to manage the catalog, members, loans, returns, overdue books, and fines. PDO prepared statements, database constraints, validation, and transactions support data integrity and safer error handling. The integration tests verify core model behavior. Before submission, the group should complete the pending browser-level test cases, confirm all report details, and rehearse the practical demonstration.
+
+## Appendix A: Application Screenshots
+
+The following screenshots are captured from the application and use the project's sample data.
+
+### Librarian Login
+
+![Librarian login page](../tests/screenshots/01-login-page.png)
+
+### Dashboard
+
+![Dashboard after login](../tests/screenshots/03-dashboard-after-login.png)
+
+### Borrow Form
+
+![Borrow form with due-date preview](../tests/screenshots/04-borrow-form.png)
+
+### Successful Borrow
+
+![Successful book issue](../tests/screenshots/05-borrow-success.png)
+
+### Overdue Loans
+
+![Return page showing overdue loans](../tests/screenshots/06-return-page-overdue-red.png)
+
+### Late Return and Fine
+
+![Late return with fine message](../tests/screenshots/07-return-late-fine.png)
+
+### Additional Screenshots to Capture
+
+Add screenshots from the running application for the following screens if the lecturer expects visual evidence for every module:
+
+- Book catalog search and book registration/editing.
+- Member directory, registration, and borrowing history.
+- Author, publisher, and category management.
+- Librarian account management.
+- Fine listing and payment confirmation.
+- Circulation summary and overdue reports.
